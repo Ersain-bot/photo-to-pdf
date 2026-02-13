@@ -2,25 +2,184 @@
 <html lang="kk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Photo2PDF</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Photo2PDF">
-    
     <link rel="apple-touch-icon" href="icon.png">
-    
-    <link rel="stylesheet" href="style.css">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: #1c1c1e;
+            --accent-color: #0a84ff;
+            --text-color: #ffffff;
+            --secondary-text: #8e8e93;
+        }
+
+        body {
+            margin: 0;
+            padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom) 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            width: 100%;
+            padding: 40px 0 20px 0;
+            text-align: left;
+        }
+
+        h1 {
+            font-size: 34px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .subtitle {
+            color: var(--secondary-text);
+            font-size: 15px;
+            margin-top: 5px;
+        }
+
+        .main-card {
+            background: var(--card-bg);
+            width: 100%;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-sizing: border-box;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* Кнопка стилі (iOS Blue) */
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        /* Камера мен Галерея батырмасы */
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-label {
+            display: block;
+            background: #2c2c2e;
+            color: var(--accent-color);
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        #preview {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 25px;
+            width: 100%;
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid #3a3a3c;
+        }
+
+        .footer-info {
+            margin-top: auto;
+            padding: 20px;
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Photo to PDF Converter</h2>
-        <input type="file" id="upload" accept="image/*" multiple>
-        <div id="preview"></div>
-        <button id="download" style="display:none;">PDF-ті жүктеп алу</button>
+
+    <div class="header">
+        <h1>Photo2PDF</h1>
+        <div class="subtitle">Суреттерді PDF-ке айналдыру</div>
     </div>
-    <script src="script.js"></script>
+
+    <div class="main-card">
+        <label for="cameraInput" class="upload-label">📸 Суретке түсіру немесе таңдау</label>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" multiple>
+
+        <button id="downloadBtn" class="btn-primary" style="display: none;">📥 PDF-ті сақтау</button>
+        
+        <div id="preview"></div>
+    </div>
+
+    <div class="footer-info">
+        iPhone үшін арнайы жасалған • 2026
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        const input = document.getElementById('cameraInput');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const preview = document.getElementById('preview');
+        
+        let imagesData = [];
+
+        input.addEventListener('change', (e) => {
+            const files = e.target.files;
+            
+            for (let file of files) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const imgData = event.target.result;
+                    imagesData.push(imgData);
+
+                    // Превью жасау
+                    const img = document.createElement('img');
+                    img.src = imgData;
+                    img.className = 'preview-img';
+                    preview.appendChild(img);
+                    
+                    downloadBtn.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const pdf = new jsPDF();
+            
+            imagesData.forEach((data, index) => {
+                if (index > 0) pdf.addPage();
+                
+                // Пропорцияны сақтау үшін қарапайым есеп (A4 форматы)
+                pdf.addImage(data, 'JPEG', 10, 10, 190, 0); 
+            });
+
+            pdf.save("My_Document.pdf");
+        });
+    </script>
 </body>
 </html>
